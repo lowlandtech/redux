@@ -19,16 +19,13 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/lowlandtech.redux.sln
 
       - name: Build project
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build src/lowlandtech.redux.sln --configuration Release --no-restore
 
       - name: Pack NuGet package with pre-release suffix
-        run: |
-          VERSION=$(dotnet msbuild -nologo -t:GetVersion -v:q -property:Version)
-          SUFFIX="alpha"
-          dotnet pack --configuration Release --no-build --output ./nupkg /p:Version="$VERSION-$SUFFIX"
+        run: dotnet pack src/lowlandtech.redux.sln --configuration Release --no-build --output ./nupkg /p:VersionSuffix=alpha
 
       - name: Publish NuGet package
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

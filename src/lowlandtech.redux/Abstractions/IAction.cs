@@ -14,5 +14,5 @@ public interface IAction
     /// <remarks>The metadata can include custom information relevant to the object, such as configuration
     /// settings, annotations, or other contextual data.  The dictionary is read-only, and its contents cannot be
     /// modified directly.</remarks>
-    IDictionary<string, object> Metadata { get; }
+    IDictionary<string, object>? Metadata { get; }
 }

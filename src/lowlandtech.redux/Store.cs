@@ -24,14 +24,14 @@ public class Store<TState> : IStore<TState>
     /// </summary>
     /// <remarks>Subscribe to this event to be notified whenever the state of the object is updated.  The
     /// event handler will be invoked with no parameters.</remarks>
-    public event Action StateChanged;
+    public event Action? StateChanged;
 
     /// <summary>
     /// Occurs when the state of the object changes asynchronously.
     /// </summary>
     /// <remarks>This event is triggered to notify subscribers of a state change.  Subscribers can handle the
     /// event by providing an asynchronous callback method.</remarks>
-    public event Func<Task> StateChangedAsync;
+    public event Func<Task>? StateChangedAsync;
 
     /// <summary>
     /// Gets or sets the action to be executed after an action has been dispatched.
@@ -39,7 +39,7 @@ public class Store<TState> : IStore<TState>
     /// <remarks>The action receives the dispatched action and the associated state as parameters. This can be
     /// used to perform post-dispatch operations such as logging, state validation,  or triggering side
     /// effects.</remarks>
-    public Action<IAction, TState> OnAfterDispatch { get; set; }
+    public Action<IAction, TState>? OnAfterDispatch { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Store{TState}"/> class, which manages state updates using a reducer
@@ -110,6 +110,15 @@ public class Store<TState> : IStore<TState>
         return result;
     }
 
+    /// <summary>
+    /// Applies the specified action to the current state using the reducer function and updates the state.
+    /// </summary>
+    /// <remarks>This method ensures thread-safe state updates by using a synchronization mechanism. It saves
+    /// the current state to the history stack before applying the reducer function to compute the new state. After the
+    /// state is updated, the future state stack is cleared, and state change notifications are triggered synchronously
+    /// and asynchronously.</remarks>
+    /// <param name="action">The action to be applied to the current state. Cannot be null.</param>
+    /// <returns>The action that was applied, returned as an object. This allows the caller to confirm the action processed.</returns>
     private async Task<object> ApplyReducer(IAction action)
     {
         await _syncRoot.WaitAsync();

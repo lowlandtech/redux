@@ -6,7 +6,7 @@
 /// <remarks>This action is typically used in scenarios where a counter value needs to be adjusted by a specific
 /// amount. The <see cref="Amount"/> property specifies the value by which the counter should be incremented.</remarks>
 /// <param name="Amount"></param>
-public record IncrementCounterAction(int Amount) : IAction
+public record IncrementCounterAction(int Amount, IDictionary<string, object>? Metadata = null) : IAction 
 {
     /// <summary>
     /// Gets a collection of metadata key-value pairs associated with the object.

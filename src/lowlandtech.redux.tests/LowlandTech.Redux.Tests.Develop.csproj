@@ -4,7 +4,13 @@
 	<TargetFramework>net9.0</TargetFramework>  
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>LowlandTech.Redux.Tests</AssemblyName>
+    <RootNamespace>LowlandTech.Redux.Tests</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="LowlandTech.Redux.Tests.Develop.v3.ncrunchproject" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />

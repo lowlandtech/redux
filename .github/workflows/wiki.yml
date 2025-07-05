@@ -1,0 +1,40 @@
+name: Publish Docs to Wiki
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish-wiki:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clone Wiki repository
+        run: |
+          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" wiki
+
+      - name: Copy docs to Wiki
+        run: |
+          rm -rf wiki/*
+          cp -R docs/* wiki/
+
+      - name: Configure Git
+        run: |
+          cd wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        run: |
+          cd wiki
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Automated Wiki update from /docs [skip ci]"
+            git push
+          fi
