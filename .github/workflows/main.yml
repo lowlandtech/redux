@@ -1,0 +1,63 @@
+name: LowlandTech.Generator Build, Pack, and Publish
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/*
+      - release/*
+      - hotfix/*
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code with full history to avoid shallow clone issues
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch the entire git history
+
+      # Setup .NET 8.0
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+
+      # Restore .NET dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Build the .NET project
+      - name: Build project
+        run: dotnet build --no-restore --configuration Release
+
+      # Pack the project Plugin into a NuGet package
+      - name: Pack the project Plugin
+        run: dotnet pack src/lowlandtech.generator  /p:PackageVersion=2025.04.34 --no-build --configuration Release -o ./nuget
+
+      # Pack the project into Domain a NuGet package
+      - name: Pack the project Domain
+        run: dotnet pack src/lowlandtech.generator.domain  /p:PackageVersion=2025.04.34 --no-build --configuration Release -o ./nuget
+
+      # Pack the project into Infrastructure a NuGet package
+      - name: Pack the project Infrastructure
+        run: dotnet pack src/lowlandtech.generator.infrastructure  /p:PackageVersion=2025.04.34 --no-build --configuration Release -o ./nuget
+
+      # Pack the project into Application a NuGet package
+      - name: Pack the project Application
+        run: dotnet pack src/lowlandtech.generator.application  /p:PackageVersion=2025.04.34 --no-build --configuration Release -o ./nuget
+
+      # Publish the NuGet package (only on the main branch)
+      - name: Publish NuGet package
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget push ./nuget/*.nupkg --source https://nuget.pkg.github.com/lowlandtech/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate

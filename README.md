@@ -8,7 +8,7 @@
 
 ---
 
-## ? Features
+## Features
 
 - Asynchronous `ReducerAsync<TState>`
 - Middleware support (`MiddlewareHandler<TState>`)
@@ -19,9 +19,9 @@
 
 ---
 
-## ?? Use Cases
+## Use Cases
 
-### 1?? Async Reducer and Middleware
+### 1. Async Reducer and Middleware
 
 Create a store with an async reducer and logging middleware:
 
@@ -95,7 +95,7 @@ public class WhenDispatchingIncrement : WhenTestingForAsync<Store<int>>
 
 ---
 
-### 2?? Undo/Redo State Management
+### 2. Undo/Redo State Management
 
 Track history and revert or re-apply state changes:
 
@@ -149,7 +149,7 @@ public class WhenRedoing : WhenTestingForAsync<Store<int>>
 
 ---
 
-## ?? Running Tests
+## Running Tests
 
 The solution uses **xUnit** and custom `ScenarioAttribute` / `ThenAttribute` for BDD-style test reporting.
 
@@ -161,7 +161,7 @@ dotnet test
 
 ---
 
-## ?? Project Structure
+## Project Structure
 
 - `LowlandTech.Redux` - Core library
 - `LowlandTech.Redux.Tests` - BDD scenario tests
@@ -169,7 +169,7 @@ dotnet test
 
 ---
 
-## ?? License
+## License
 
 MIT License.  
 (c) LowlandTech Contributors.

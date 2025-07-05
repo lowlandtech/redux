@@ -1,10 +1,65 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Target framework -->
+	<TargetFramework>net9.0</TargetFramework>
+	<!-- Or: net8.0 if you only target modern .NET -->
+    <!-- Enable nullable reference types -->
+	<Nullable>enable</Nullable>
+    <!-- Company & authorship -->
+	<Company>LowlandTech</Company>
+	<Authors>wendellmva</Authors>
+	<Copyright>Copyright © 2024 LowlandTech</Copyright>
+
+	<!-- Versioning -->
+	<Version>2025.7.1</Version>
+	<PackageVersion>2025.7.1</PackageVersion>
+
+	<!-- Package metadata -->
+	<PackageId>LowlandTech.Redux</PackageId>
+	<Title>LowlandTech.Redux</Title>
+	<Description>Asynchronous Redux-style state management with middleware, undo/redo, and test support for .NET.</Description>
+	<PackageTags>redux,state management,async,middleware,lowlandtech</PackageTags>
+	<RepositoryUrl>https://github.com/lowlandtech/generator</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageIcon>icon.jpg</PackageIcon>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Source link and deterministic builds for reproducible packages -->
+	<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	<Deterministic>true</Deterministic>
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<IncludeSymbols>true</IncludeSymbols>
+	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<IncludeSource>true</IncludeSource>
+
+	<!-- XML documentation -->
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+	<!-- Preserve compilation context for test projects -->
+	<PreserveCompilationContext>true</PreserveCompilationContext>
+
+	<!-- Optional: define where your NuGet package will output -->
+	<!--<PackageOutputPath>./nupkg</PackageOutputPath>-->
   </PropertyGroup>
+
+  <!-- Package files -->
+  <ItemGroup>
+	  <None Include="../../icon.svg" Pack="true" PackagePath="" />
+	  <None Include="../../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <!-- Release notes pulled from CHANGELOG -->
+  <Target Name="ReadReleaseNotes" BeforeTargets="Pack">
+	  <ReadLinesFromFile File="../../CHANGELOG.md">
+		  <Output TaskParameter="Lines" PropertyName="PackageReleaseNotes" />
+	  </ReadLinesFromFile>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="System.Reactive" Version="6.0.1" />
