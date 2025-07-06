@@ -495,3 +495,4 @@ nuget.config
 docs/.obsidian/
 nginx
 /.NCrunch_lowlandtech/StoredText
+/.vscode
