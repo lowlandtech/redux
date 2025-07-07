@@ -8,6 +8,26 @@
 public interface IStore<out TState>
 {
     /// <summary>
+    /// Gets an observable sequence of events.
+    /// </summary>
+    /// <remarks>Subscribers to this property will receive notifications for each event in the sequence. 
+    /// Ensure proper disposal of subscriptions to avoid memory leaks.</remarks>
+    public IObservable<IEvent> Events { get; }
+
+    /// <summary>
+    /// Publishes the specified event to all subscribed observers.
+    /// </summary>
+    /// <param name="event">The event to be published. Cannot be <see langword="null"/>.</param>
+    public void PublishEvent(IEvent @event);
+
+    /// <summary>
+    /// Gets an observable sequence of actions.
+    /// </summary>
+    /// <remarks>Subscribers to this observable will receive notifications for each action emitted.  Ensure
+    /// proper subscription management to avoid memory leaks or unintended behavior.</remarks>
+    public IObservable<IAction> Actions { get; }
+
+    /// <summary>
     /// Dispatches the specified action asynchronously and returns the result of the operation.
     /// </summary>
     /// <remarks>The exact nature of the result depends on the implementation of the action being dispatched.

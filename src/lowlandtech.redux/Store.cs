@@ -1,4 +1,6 @@
-﻿namespace LowlandTech.Redux;
+﻿using System.Reactive.Subjects;
+
+namespace LowlandTech.Redux;
 
 /// <summary>
 /// Represents a state management store that maintains the state of type <typeparamref name="TState"/>  and provides
@@ -11,6 +13,20 @@
 /// <typeparam name="TState">The type of the state managed by the store.</typeparam>
 public class Store<TState> : IStore<TState>
 {
+    /// <summary>
+    /// Represents a subject that tracks and notifies observers of <see cref="IAction"/> events.
+    /// </summary>
+    /// <remarks>This field is used internally to manage and propagate actions within the system.  It allows
+    /// observers to subscribe and react to <see cref="IAction"/> events as they occur.</remarks>
+    private readonly Subject<IAction> _actions = new();
+
+    /// <summary>
+    /// Represents a subject that emits events of type <see cref="IEvent"/>.
+    /// </summary>
+    /// <remarks>This field is used internally to manage and broadcast events to subscribers. It is a readonly
+    /// field and cannot be modified after initialization.</remarks>
+    private readonly Subject<IEvent> _events = new();
+
     private readonly ReducerAsync<TState> _reducer;
     private readonly List<MiddlewareHandler<TState>> _middlewares;
     private readonly SemaphoreSlim _syncRoot = new(1, 1);
@@ -75,6 +91,29 @@ public class Store<TState> : IStore<TState>
     /// <returns>The result of applying the <paramref name="selector"/> function to the current state.</returns>
     public TResult Select<TResult>(Func<TState, TResult> selector) =>
         selector(_lastState);
+    
+    /// <summary>
+    /// Gets an observable sequence of events.
+    /// </summary>
+    /// <remarks>Subscribers to this property will receive notifications for each event in the sequence. 
+    /// Ensure proper disposal of subscriptions to avoid memory leaks.</remarks>
+    public IObservable<IEvent> Events => _events.AsObservable();
+
+    /// <summary>
+    /// Publishes the specified event to all subscribed observers.
+    /// </summary>
+    /// <param name="event">The event to be published. Cannot be <see langword="null"/>.</param>
+    public void PublishEvent(IEvent @event)
+    {
+        _events.OnNext(@event);
+    }
+
+    /// <summary>
+    /// Gets an observable sequence of actions.
+    /// </summary>
+    /// <remarks>Subscribers to this observable will receive notifications for each action emitted.  Ensure
+    /// proper subscription management to avoid memory leaks or unintended behavior.</remarks>
+    public IObservable<IAction> Actions => _actions.AsObservable();
 
     /// <summary>
     /// Dispatches an action to the middleware pipeline and applies the reducer to update the state.
