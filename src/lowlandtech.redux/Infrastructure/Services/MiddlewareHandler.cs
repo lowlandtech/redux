@@ -15,4 +15,4 @@
 public delegate Task<object> MiddlewareHandler<in TState>(
     IStore<TState> store,
     IAction action,
-    Func<Task<object>> next);
+    Func<IAction?, Task<object>> next);

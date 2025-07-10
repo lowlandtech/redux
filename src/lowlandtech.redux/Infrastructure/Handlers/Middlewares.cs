@@ -17,7 +17,7 @@ public static class Middlewares
     public static MiddlewareHandler<int> Logger = async (store, action, next) =>
     {
         Console.WriteLine($"[Middleware] Dispatching {action.GetType().Name}");
-        var result = await next();
+        var result = await next(null);
         Console.WriteLine($"[Middleware] New State: {store.GetState()}");
         return result;
     };

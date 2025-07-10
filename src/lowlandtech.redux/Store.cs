@@ -1,6 +1,4 @@
-﻿using System.Reactive.Subjects;
-
-namespace LowlandTech.Redux;
+﻿namespace LowlandTech.Redux;
 
 /// <summary>
 /// Represents a state management store that maintains the state of type <typeparamref name="TState"/>  and provides
@@ -11,7 +9,7 @@ namespace LowlandTech.Redux;
 /// changes.  State changes trigger the <see cref="StateChanged"/> and <see cref="StateChangedAsync"/> events,  allowing
 /// subscribers to react to updates.</remarks>
 /// <typeparam name="TState">The type of the state managed by the store.</typeparam>
-public class Store<TState> : IStore<TState>
+public record Store<TState> : IStore<TState>
 {
     /// <summary>
     /// Represents a subject that tracks and notifies observers of <see cref="IAction"/> events.
@@ -133,16 +131,18 @@ public class Store<TState> : IStore<TState>
 
         var index = -1;
 
-        Task<object> Next()
+        Task<object> Next(IAction? maybeAction)
         {
             index++;
+            var effectiveAction = maybeAction ?? action;
+
             if (index < _middlewares.Count)
-                return _middlewares[index](this, action, Next);
+                return _middlewares[index](this, effectiveAction, Next);
             else
-                return ApplyReducer(action);
+                return ApplyReducer(effectiveAction);
         }
 
-        var result = await Next();
+        var result = await Next(null);
 
         OnAfterDispatch?.Invoke(action, _lastState);
 

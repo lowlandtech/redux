@@ -18,12 +18,10 @@ public interface IHandler<in TAction, in TState>
     /// <param name="store">The state store used to retrieve or update the current state during the action handling process.</param>
     /// <param name="action">The action to be handled. This represents the operation or event to process.</param>
     /// <param name="next">A delegate that invokes the next middleware in the pipeline.  This function must be called to pass control to
-    /// subsequent handlers.</param>
+    ///     subsequent handlers.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the outcome of the action handling, 
     /// which may vary depending on the middleware implementation.</returns>
-    Task<object> HandleAsync(
-        IStore<TState> store,
+    Task<object> HandleAsync(IStore<TState> store,
         TAction action,
-        Func<Task<object>> next
-    );
+        Func<IAction?, Task<object>> next);
 }
