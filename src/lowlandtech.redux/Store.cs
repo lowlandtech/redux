@@ -139,7 +139,7 @@ public record Store<TState> : IStore<TState>
             if (index < _middlewares.Count)
                 return _middlewares[index](this, effectiveAction, Next);
             else
-                return ApplyReducer(effectiveAction);
+                return Dispatch(effectiveAction);
         }
 
         var result = await Next(null);
@@ -158,7 +158,7 @@ public record Store<TState> : IStore<TState>
     /// and asynchronously.</remarks>
     /// <param name="action">The action to be applied to the current state. Cannot be null.</param>
     /// <returns>The action that was applied, returned as an object. This allows the caller to confirm the action processed.</returns>
-    private async Task<object> ApplyReducer(IAction action)
+    public async Task<object> Dispatch(IAction action)
     {
         await _syncRoot.WaitAsync();
         try
