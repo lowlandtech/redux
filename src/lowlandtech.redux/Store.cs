@@ -67,7 +67,7 @@ public record Store<TState> : IStore<TState>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="reducer"/> is <see langword="null"/>.</exception>
     public Store(
         ReducerAsync<TState> reducer,
-        TState initialState = default,
+        TState? initialState = default,
         params MiddlewareHandler<TState>[] middlewares)
     {
         _reducer = reducer ?? throw new ArgumentNullException(nameof(reducer));
