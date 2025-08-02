@@ -1,4 +1,6 @@
-﻿namespace LowlandTech.Redux.Tests;
+﻿using LowlandTech.Flows.Domain.Entities;
+
+namespace LowlandTech.Redux.Tests;
 
 [Scenario(
     "VCHIP-2800-SC011",
