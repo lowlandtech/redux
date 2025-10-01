@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\lowlandtech\src\plugins\lowlandtech.identity\lowlandtech.identity.tests\LowlandTech.Identity.Tests.csproj" />
+    <ProjectReference Include="..\..\..\lowlandtech.web\src\plugins\lowlandtech.identity\lowlandtech.identity.tests\LowlandTech.Identity.Tests.csproj" />
     <ProjectReference Include="..\lowlandtech.redux\LowlandTech.Redux.csproj" />
   </ItemGroup>
 
