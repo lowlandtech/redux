@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LowlandTech.Redux", "lowlan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LowlandTech.Redux.Tests", "lowlandtech.redux.tests\LowlandTech.Redux.Tests.csproj", "{2D0332ED-7BD6-45F5-B585-5EDE02F61715}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LowlandTech.Testing.Features", "..\..\lowlandtech.testing.features\src\lowlandtech.testing.features\LowlandTech.Testing.Features.csproj", "{15C434CF-EBA1-CE13-2F23-287D1803997A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{2D0332ED-7BD6-45F5-B585-5EDE02F61715}.Release|x64.Build.0 = Release|Any CPU
 		{2D0332ED-7BD6-45F5-B585-5EDE02F61715}.Release|x86.ActiveCfg = Release|Any CPU
 		{2D0332ED-7BD6-45F5-B585-5EDE02F61715}.Release|x86.Build.0 = Release|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Debug|x64.Build.0 = Debug|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Debug|x86.Build.0 = Debug|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Release|x64.ActiveCfg = Release|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Release|x64.Build.0 = Release|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Release|x86.ActiveCfg = Release|Any CPU
+		{15C434CF-EBA1-CE13-2F23-287D1803997A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

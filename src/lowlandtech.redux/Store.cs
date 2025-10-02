@@ -9,7 +9,7 @@
 /// changes.  State changes trigger the <see cref="StateChanged"/> and <see cref="StateChangedAsync"/> events,  allowing
 /// subscribers to react to updates.</remarks>
 /// <typeparam name="TState">The type of the state managed by the store.</typeparam>
-public record Store<TState> : IStore<TState>
+public record Store<TState> : IStore<TState>, IDisposable
 {
     /// <summary>
     /// Represents a subject that tracks and notifies observers of <see cref="IAction"/> events.
@@ -32,6 +32,8 @@ public record Store<TState> : IStore<TState>
     private TState _lastState;
     private readonly Stack<TState> _history = new();
     private readonly Stack<TState> _future = new();
+    private readonly List<Action<TState>> _listeners = new();
+    private bool _disposed;
 
     /// <summary>
     /// Occurs when the state of the object changes.
@@ -79,7 +81,12 @@ public record Store<TState> : IStore<TState>
     /// Retrieves the most recent state of the object.
     /// </summary>
     /// <returns>The last recorded state of type <typeparamref name="TState"/>.</returns>
-    public TState GetState() => _lastState;
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    public TState GetState()
+    {
+        ThrowIfDisposed();
+        return _lastState;
+    }
 
     /// <summary>
     /// Projects the current state into a new form by applying the specified selector function.
@@ -87,8 +94,12 @@ public record Store<TState> : IStore<TState>
     /// <typeparam name="TResult">The type of the value returned by the selector function.</typeparam>
     /// <param name="selector">A function that transforms the current state into a result of type <typeparamref name="TResult"/>.</param>
     /// <returns>The result of applying the <paramref name="selector"/> function to the current state.</returns>
-    public TResult Select<TResult>(Func<TState, TResult> selector) =>
-        selector(_lastState);
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    public TResult Select<TResult>(Func<TState, TResult> selector)
+    {
+        ThrowIfDisposed();
+        return selector(_lastState);
+    }
     
     /// <summary>
     /// Gets an observable sequence of events.
@@ -101,8 +112,10 @@ public record Store<TState> : IStore<TState>
     /// Publishes the specified event to all subscribed observers.
     /// </summary>
     /// <param name="event">The event to be published. Cannot be <see langword="null"/>.</param>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
     public void PublishEvent(IEvent @event)
     {
+        ThrowIfDisposed();
         _events.OnNext(@event);
     }
 
@@ -125,8 +138,10 @@ public record Store<TState> : IStore<TState>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation. The task result contains the value returned by the
     /// middleware pipeline or the reducer.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
     public async Task<object> DispatchAsync(IAction action)
     {
+        ThrowIfDisposed();
         if (action == null) throw new ArgumentNullException(nameof(action));
 
         var index = -1;
@@ -139,7 +154,7 @@ public record Store<TState> : IStore<TState>
             if (index < _middlewares.Count)
                 return _middlewares[index](this, effectiveAction, Next);
             else
-                return Dispatch(effectiveAction);
+                return DispatchCore(effectiveAction);
         }
 
         var result = await Next(null);
@@ -158,11 +173,13 @@ public record Store<TState> : IStore<TState>
     /// and asynchronously.</remarks>
     /// <param name="action">The action to be applied to the current state. Cannot be null.</param>
     /// <returns>The action that was applied, returned as an object. This allows the caller to confirm the action processed.</returns>
-    public async Task<object> Dispatch(IAction action)
+    private async Task<object> DispatchCore(IAction action)
     {
+        TState previousState;
         await _syncRoot.WaitAsync();
         try
         {
+            previousState = _lastState;
             _history.Push(_lastState);
             _lastState = await _reducer(_lastState, action);
             _future.Clear();
@@ -172,18 +189,35 @@ public record Store<TState> : IStore<TState>
             _syncRoot.Release();
         }
 
-        StateChanged?.Invoke();
-
-        if (StateChangedAsync != null)
+        // Only notify if state reference actually changed (reducer returned new state)
+        if (!ReferenceEquals(previousState, _lastState))
         {
-            var handlers = StateChangedAsync.GetInvocationList();
-            foreach (Func<Task> handler in handlers)
+            StateChanged?.Invoke();
+
+            if (StateChangedAsync != null)
             {
-                await handler();
+                var handlers = StateChangedAsync.GetInvocationList();
+                foreach (Func<Task> handler in handlers)
+                {
+                    await handler();
+                }
             }
+
+            NotifyListeners();
         }
 
         return action;
+    }
+
+    /// <summary>
+    /// Fire-and-forget convenience wrapper for UI event handlers that can't be async.
+    /// Prefer <see cref="DispatchAsync"/> when you can await.
+    /// </summary>
+    /// <param name="action">The action to dispatch. Cannot be <see langword="null"/>.</param>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    public void Dispatch(IAction action)
+    {
+        _ = DispatchAsync(action);
     }
 
     /// <summary>
@@ -191,12 +225,15 @@ public record Store<TState> : IStore<TState>
     /// </summary>
     /// <remarks>This method restores the last saved state from the history stack and moves the current state
     /// to the future stack. If the history stack is empty, the method does nothing.</remarks>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
     public void Undo()
     {
+        ThrowIfDisposed();
         if (_history.Count == 0) return;
         _future.Push(_lastState);
         _lastState = _history.Pop();
         StateChanged?.Invoke();
+        NotifyListeners();
     }
 
     /// <summary>
@@ -204,11 +241,128 @@ public record Store<TState> : IStore<TState>
     /// </summary>
     /// <remarks>This method moves the most recent state from the redo stack to the undo stack and updates the
     /// current state.  If there are no states available to redo, the method does nothing.</remarks>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
     public void Redo()
     {
+        ThrowIfDisposed();
         if (_future.Count == 0) return;
         _history.Push(_lastState);
         _lastState = _future.Pop();
         StateChanged?.Invoke();
+        NotifyListeners();
+    }
+
+    /// <summary>
+    /// Adds a middleware handler to the store's pipeline.
+    /// </summary>
+    /// <param name="middleware">The middleware handler to add. Cannot be <see langword="null"/>.</param>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="middleware"/> is <see langword="null"/>.</exception>
+    public void AddMiddleware(MiddlewareHandler<TState> middleware)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(middleware);
+        _middlewares.Add(middleware);
+    }
+
+    /// <summary>
+    /// Removes all middleware handlers from the store's pipeline.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    public void ClearMiddlewares()
+    {
+        ThrowIfDisposed();
+        _middlewares.Clear();
+    }
+
+    /// <summary>
+    /// Gets the number of middleware handlers currently registered.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    public int MiddlewareCount
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _middlewares.Count;
+        }
+    }
+
+    /// <summary>
+    /// Subscribe to state changes. Returns an IDisposable to unsubscribe.
+    /// </summary>
+    /// <param name="listener">The callback to invoke when state changes. Cannot be <see langword="null"/>.</param>
+    /// <returns>An IDisposable that will unsubscribe the listener when disposed.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="listener"/> is <see langword="null"/>.</exception>
+    public IDisposable Subscribe(Action<TState> listener)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(listener);
+        _listeners.Add(listener);
+        return new Subscription(this, listener);
+    }
+
+    /// <summary>
+    /// Unsubscribes a listener from state change notifications.
+    /// </summary>
+    /// <param name="listener">The listener to remove.</param>
+    private void Unsubscribe(Action<TState> listener)
+    {
+        _listeners.Remove(listener);
+    }
+
+    /// <summary>
+    /// Notifies all subscribed listeners of a state change.
+    /// </summary>
+    private void NotifyListeners()
+    {
+        // snapshot to avoid issues if listeners mutate during notification
+        var snapshot = _listeners.ToArray();
+        foreach (var listener in snapshot)
+        {
+            try { listener(_lastState); } catch { /* swallow listener exceptions */ }
+        }
+    }
+
+    /// <summary>
+    /// Represents a subscription to state changes that can be disposed to unsubscribe.
+    /// </summary>
+    private sealed class Subscription(Store<TState> store, Action<TState> listener) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            store.Unsubscribe(listener);
+        }
+    }
+
+    /// <summary>
+    /// Throws ObjectDisposedException if the store has been disposed.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">Thrown if the store has been disposed.</exception>
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(nameof(Store<TState>));
+        }
+    }
+
+    /// <summary>
+    /// Disposes the store and releases its resources.
+    /// </summary>
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _syncRoot?.Dispose();
+            _actions?.Dispose();
+            _events?.Dispose();
+            _disposed = true;
+        }
     }
 }

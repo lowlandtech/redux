@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
     <!-- Target framework -->
 	<TargetFramework>net9.0</TargetFramework>
 	<!-- Or: net8.0 if you only target modern .NET -->
@@ -19,9 +19,9 @@
 	<PackageVersion>2025.7.1</PackageVersion>
 
 	<!-- Package metadata -->
-	<PackageId>LowlandTech.Testing.Features</PackageId>
-	<Title>LowlandTech.Testing.Features</Title>
-	<Description>Asynchronous Testing.Features-style state management with middleware, undo/redo, and test support for .NET.</Description>
+	<PackageId>LowlandTech.Redux</PackageId>
+	<Title>LowlandTech Redux</Title>
+	<Description>Asynchronous Redux-style state management with middleware, undo/redo, and subscription support for .NET.</Description>
 	<PackageTags>redux,state management,async,middleware,lowlandtech</PackageTags>
 	<RepositoryUrl>https://github.com/lowlandtech/generator</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>

@@ -1,0 +1,75 @@
+image: mcr.microsoft.com/dotnet/sdk:9.0
+
+stages:
+  - build
+  - test
+  - package
+  - publish
+
+variables:
+  SOLUTION_FILE: "lowlandtech.redux.sln"
+  PROJECT_PATH: "src/lowlandtech.redux/LowlandTech.Redux.csproj"
+  NUGET_OUTPUT_PATH: "./nupkg"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+
+# Cache NuGet packages between jobs
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .nuget/
+
+before_script:
+  - dotnet --version
+  - dotnet restore $SOLUTION_FILE --packages .nuget
+
+build:
+  stage: build
+  script:
+    - dotnet build $SOLUTION_FILE --configuration Release --no-restore
+  artifacts:
+    paths:
+      - src/lowlandtech.redux/bin/Release/
+    expire_in: 1 hour
+
+test:
+  stage: test
+  script:
+    - dotnet test $SOLUTION_FILE --configuration Release --no-build --verbosity normal
+  dependencies:
+    - build
+
+pack:
+  stage: package
+  script:
+    - dotnet pack $PROJECT_PATH --configuration Release --no-build --output $NUGET_OUTPUT_PATH
+    - echo "Created NuGet package:"
+    - ls -la $NUGET_OUTPUT_PATH
+  artifacts:
+    paths:
+      - $NUGET_OUTPUT_PATH/*.nupkg
+      - $NUGET_OUTPUT_PATH/*.snupkg
+    expire_in: 1 week
+  dependencies:
+    - build
+  only:
+    - develop
+    - main
+    - tags
+
+publish:
+  stage: publish
+  script:
+    - |
+      for package in $NUGET_OUTPUT_PATH/*.nupkg; do
+        echo "Publishing $package to GitLab Package Registry..."
+        dotnet nuget push "$package" \
+          --source "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/nuget/index.json" \
+          --api-key "${CI_JOB_TOKEN}"
+      done
+  dependencies:
+    - pack
+  only:
+    - develop
+    - main
+    - tags
