@@ -7,7 +7,7 @@ stages:
   - publish
 
 variables:
-  SOLUTION_FILE: "lowlandtech.redux.sln"
+  SOLUTION_FILE: "src/lowlandtech.redux.sln"
   PROJECT_PATH: "src/lowlandtech.redux/LowlandTech.Redux.csproj"
   NUGET_OUTPUT_PATH: "./nupkg"
   COVERAGE_OUTPUT_PATH: "./coverage"
