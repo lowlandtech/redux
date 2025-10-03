@@ -10,6 +10,7 @@ variables:
   SOLUTION_FILE: "lowlandtech.redux.sln"
   PROJECT_PATH: "src/lowlandtech.redux/LowlandTech.Redux.csproj"
   NUGET_OUTPUT_PATH: "./nupkg"
+  COVERAGE_OUTPUT_PATH: "./coverage"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
 
@@ -21,30 +22,45 @@ cache:
 
 before_script:
   - dotnet --version
+  - echo "Building version $(if [ -n "$CI_PIPELINE_IID" ]; then echo "2025.7.1-ci.$CI_PIPELINE_IID"; else echo "2025.7.1"; fi)"
   - dotnet restore $SOLUTION_FILE --packages .nuget
 
 build:
   stage: build
   script:
-    - dotnet build $SOLUTION_FILE --configuration Release --no-restore
+    - dotnet build $SOLUTION_FILE --configuration Release --no-restore /p:CI_PIPELINE_IID=$CI_PIPELINE_IID /p:CI_PROJECT_URL=$CI_PROJECT_URL
   artifacts:
     paths:
       - src/lowlandtech.redux/bin/Release/
+      - src/lowlandtech.redux.tests/bin/Release/
     expire_in: 1 hour
 
 test:
   stage: test
   script:
-    - dotnet test $SOLUTION_FILE --configuration Release --no-build --verbosity normal
+    - dotnet test $SOLUTION_FILE --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory $COVERAGE_OUTPUT_PATH
+    - echo "Test coverage results:"
+    - find $COVERAGE_OUTPUT_PATH -name "coverage.cobertura.xml" || true
+  coverage: '/Total\s+\|\s+(\d+\.?\d*)%/'
+  artifacts:
+    paths:
+      - $COVERAGE_OUTPUT_PATH/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: $COVERAGE_OUTPUT_PATH/*/coverage.cobertura.xml
+    expire_in: 1 week
   dependencies:
     - build
 
 pack:
   stage: package
   script:
-    - dotnet pack $PROJECT_PATH --configuration Release --no-build --output $NUGET_OUTPUT_PATH
+    - dotnet pack $PROJECT_PATH --configuration Release --no-build --output $NUGET_OUTPUT_PATH /p:CI_PIPELINE_IID=$CI_PIPELINE_IID /p:CI_PROJECT_URL=$CI_PROJECT_URL
     - echo "Created NuGet package:"
     - ls -la $NUGET_OUTPUT_PATH
+    - echo "Package version:"
+    - find $NUGET_OUTPUT_PATH -name "*.nupkg" -exec basename {} \;
   artifacts:
     paths:
       - $NUGET_OUTPUT_PATH/*.nupkg
@@ -57,19 +73,40 @@ pack:
     - main
     - tags
 
-publish:
+# Publish development builds automatically
+publish:develop:
   stage: publish
   script:
     - |
       for package in $NUGET_OUTPUT_PATH/*.nupkg; do
-        echo "Publishing $package to GitLab Package Registry..."
+        echo "Publishing development package $package to GitLab Package Registry..."
         dotnet nuget push "$package" \
           --source "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/nuget/index.json" \
-          --api-key "${CI_JOB_TOKEN}"
+          --api-key "${CI_JOB_TOKEN}" \
+          --skip-duplicate
       done
   dependencies:
     - pack
   only:
     - develop
+
+# Publish production builds with manual approval
+publish:production:
+  stage: publish
+  when: manual
+  script:
+    - |
+      for package in $NUGET_OUTPUT_PATH/*.nupkg; do
+        echo "Publishing production package $package to GitLab Package Registry..."
+        dotnet nuget push "$package" \
+          --source "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/nuget/index.json" \
+          --api-key "${CI_JOB_TOKEN}" \
+          --skip-duplicate
+      done
+  dependencies:
+    - pack
+  only:
     - main
     - tags
+  environment:
+    name: production

@@ -3,7 +3,10 @@
     "allow": [
       "Read(//c/Workspaces/lowlandtech.redux/**)",
       "Bash(dotnet build:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(unzip:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

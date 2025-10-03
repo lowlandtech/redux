@@ -4,9 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
-    <!-- Target framework -->
-	<TargetFramework>net9.0</TargetFramework>
-	<!-- Or: net8.0 if you only target modern .NET -->
+    <!-- Target frameworks - support both .NET 8 and 9 -->
+	<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <!-- Enable nullable reference types -->
 	<Nullable>enable</Nullable>
     <!-- Company & authorship -->
@@ -14,16 +13,20 @@
 	<Authors>wendellmva</Authors>
 	<Copyright>Copyright © 2024 LowlandTech</Copyright>
 
-	<!-- Versioning -->
-	<Version>2025.7.1</Version>
-	<PackageVersion>2025.7.1</PackageVersion>
+	<!-- Versioning - CI will override these -->
+	<VersionPrefix>2025.7.1</VersionPrefix>
+	<VersionSuffix Condition="'$(CI_PIPELINE_IID)' != ''">ci.$(CI_PIPELINE_IID)</VersionSuffix>
+	<Version Condition="'$(VersionSuffix)' != ''">$(VersionPrefix)-$(VersionSuffix)</Version>
+	<Version Condition="'$(VersionSuffix)' == ''">$(VersionPrefix)</Version>
+	<PackageVersion>$(Version)</PackageVersion>
 
 	<!-- Package metadata -->
 	<PackageId>LowlandTech.Redux</PackageId>
 	<Title>LowlandTech Redux</Title>
 	<Description>Asynchronous Redux-style state management with middleware, undo/redo, and subscription support for .NET.</Description>
 	<PackageTags>redux,state management,async,middleware,lowlandtech</PackageTags>
-	<RepositoryUrl>https://github.com/lowlandtech/generator</RepositoryUrl>
+	<RepositoryUrl Condition="'$(CI_PROJECT_URL)' != ''">$(CI_PROJECT_URL)</RepositoryUrl>
+	<RepositoryUrl Condition="'$(CI_PROJECT_URL)' == ''">https://gitlab.com/lowlandtech/redux</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageIcon>icon.jpg</PackageIcon>
@@ -50,7 +53,7 @@
 
   <!-- Package files -->
   <ItemGroup>
-	  <None Include="../../icon.svg" Pack="true" PackagePath="" />
+	  <None Include="../../icon.jpg" Pack="true" PackagePath="" />
 	  <None Include="../../README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
